@@ -1,11 +1,11 @@
 package com.restkeeper.operator.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.restkeeper.operator.entity.OperatorUser;
 import com.restkeeper.operator.service.IOperatorUserService;
+import com.restkeeper.operator.vo.LoginVO;
 import com.restkeeper.response.vo.PageVO;
+import com.restkeeper.utils.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -14,10 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 管理员的登录接口
@@ -69,6 +66,20 @@ public class UserController{
         IPage<OperatorUser>  page= operatorUserService.queryPageByName(pageNo, pageSize, name);
         PageVO<OperatorUser> pageV0= new PageVO<OperatorUser>(page);
         return  pageV0;
+    }
+
+
+    /**
+     * 登录校验
+     * @param loginVO
+     * @return
+     */
+    @ApiOperation(value = "登录校验")
+    @ApiImplicitParam(name = "Authorization", value = "jwt token",
+            required = false, dataType = "String",paramType="header")
+    @PostMapping("/login")
+    public Result login(@RequestBody LoginVO loginVO){
+        return operatorUserService.login(loginVO.getLoginName(),loginVO.getLoginPass());
     }
 
 }
