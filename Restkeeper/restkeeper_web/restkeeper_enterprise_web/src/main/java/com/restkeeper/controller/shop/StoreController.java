@@ -2,8 +2,10 @@ package com.restkeeper.controller.shop;
 
 import com.restkeeper.constants.SystemCode;
 import com.restkeeper.response.vo.PageVO;
+import com.restkeeper.shop.dto.StoreDTO;
 import com.restkeeper.shop.entity.Store;
 import com.restkeeper.shop.service.IStoreService;
+import com.restkeeper.utils.Result;
 import com.restkeeper.vo.shop.AddStoreVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -13,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.Reference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * <p>
@@ -68,5 +72,35 @@ public class StoreController {
 
         return storeService.updateById(store);
     }
+
+    @ApiOperation(value = "获取门店省份信息")
+    @GetMapping("/listProvince")
+    @ResponseBody
+    public List<String> listProvince() {
+        return storeService.getAllProvince();
+    }
+
+    @ApiOperation(value = "根据省份获取门店列表")
+    @GetMapping("/getStoreByProvince/{province}")
+    @ResponseBody
+    public List<StoreDTO> getStoreByProvince(@PathVariable String province) {
+        return storeService.getStoreByProvince(province);
+    }
+
+    @ApiOperation(value = "获取当前商户管理的门店信息")
+    @GetMapping(value = "/listManagerStores")
+    public List<StoreDTO> getStoreListByManagerId(){
+        return storeService.getStoresByManagerId();
+    }
+
+    @ApiOperation(value = "门店切换")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "path", name = "storeId", value = "门店Id", dataType = "String")})
+    @GetMapping(value = "/switchStore/{storeId}")
+    public Result switchStore(@PathVariable("storeId") String storeId){
+        return storeService.switchStore(storeId);
+    }
+
+
 
 }

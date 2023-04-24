@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface StoreMapper extends BaseMapper<Store> {
     //查询品牌关联的门店总数
@@ -15,4 +17,14 @@ public interface StoreMapper extends BaseMapper<Store> {
     //查询品牌关联城市总数
     @Select("select count(distinct(city)) from t_store where brand_id=#{brandId} and status=1 and is_deleted=0")
     Integer getCityCount(@Param("brandId") String brandId);
+
+
+    //根据门店管理员id查询门店列表
+    @Select("select * from t_store where store_manager_id=#{managerId} order by last_update_time desc")
+    List<Store> selectStoreInfoByManagerId(@Param("managerId") String managerId);
+
+
+    //获取有效的省份列表
+    @Select(value="select DISTINCT(province) from t_store where status=1 and is_deleted=0")
+    public List<String> getAllProvince();
 }

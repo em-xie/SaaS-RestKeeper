@@ -10,6 +10,7 @@
         <result column="shop_id" property="shopId" />
         <result column="is_deleted" property="isDeleted" />
         <result column="last_update_time" property="lastUpdateTime" />
+        <collection column="store_manager_id" property="stores" select="com.restkeeper.shop.mapper.StoreMapper.selectStoreInfoByManagerId"/>
     </resultMap>
 
 </mapper>

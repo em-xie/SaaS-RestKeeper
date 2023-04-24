@@ -1,7 +1,10 @@
 package com.restkeeper.controller;
 
+import com.restkeeper.constants.SystemCode;
 import com.restkeeper.operator.service.IEnterpriseAccountService;
+import com.restkeeper.shop.service.IStoreManagerService;
 import com.restkeeper.utils.Result;
+import com.restkeeper.utils.ResultCode;
 import com.restkeeper.vo.LoginVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -20,10 +23,31 @@ public class LoginController {
     @Reference(version = "1.0.0",check = false)
     private IEnterpriseAccountService enterpriseAccountService;
 
+    @Reference(version = "1.0.0",check = false)
+    private IStoreManagerService storeManagerService;
+
     @ApiOperation(value = "登录入口")
     @ApiImplicitParam(name = "Authorization", value = "jwt token", required = false, dataType = "String",paramType="header")
     @PostMapping("/login")
     public Result login(@RequestBody LoginVO loginVO){
-        return enterpriseAccountService.login(loginVO.getShopId(),loginVO.getPhone(),loginVO.getPassword());
+
+        if (SystemCode.USER_TYPE_SHOP.equals(loginVO.getType())){
+            //集团用户
+            return enterpriseAccountService.login(loginVO.getShopId(),loginVO.getPhone(),loginVO.getPassword());
+        }
+
+        if (SystemCode.USER_TYPE_STORE_MANAGER.equals(loginVO.getType())){
+            //店长
+            return storeManagerService.login(loginVO.getShopId(),loginVO.getPhone(),loginVO.getPassword());
+        }
+
+        Result result = new Result();
+        result.setStatus(ResultCode.error);
+        result.setDesc("不支持当前用户类型登录");
+        return result;
+
+
+
+
     }
 }

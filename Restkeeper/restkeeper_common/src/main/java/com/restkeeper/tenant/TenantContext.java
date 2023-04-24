@@ -3,10 +3,6 @@ package com.restkeeper.tenant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @作者：xie
- * @时间：2023/4/23 21:00
- */
 public class TenantContext {
 
     static ThreadLocal<Map<String,Object>> threadLocal = new ThreadLocal<Map<String, Object>>(){
@@ -31,7 +27,7 @@ public class TenantContext {
         return threadLocal.get();
     }
 
-    public static String getStorId(){
+    public static String getStoreId(){
         return String.valueOf(threadLocal.get().get("storeId"));
     }
 
@@ -44,6 +40,7 @@ public class TenantContext {
     }
 
     public static String getLoginUserId(){
+        Map<String, Object> stringObjectMap = threadLocal.get();
         return String.valueOf(threadLocal.get().get("loginUserId"));
     }
 

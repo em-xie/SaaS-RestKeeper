@@ -16,7 +16,9 @@ public class DubboConsumerContextFilter implements Filter {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         RpcContext.getContext().setAttachment("shopId", TenantContext.getShopId());
-
+        RpcContext.getContext().setAttachment("loginUserId", TenantContext.getLoginUserId());
+        RpcContext.getContext().setAttachment("loginUserName", TenantContext.getLoginUserName());
+        RpcContext.getContext().setAttachment("storeId", TenantContext.getStoreId());
         return invoker.invoke(invocation);
     }
 }
