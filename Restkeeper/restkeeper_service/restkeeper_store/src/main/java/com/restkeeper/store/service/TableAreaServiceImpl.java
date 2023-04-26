@@ -1,0 +1,28 @@
+package com.restkeeper.store.service;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.restkeeper.exception.BussinessException;
+import com.restkeeper.store.entity.TableArea;
+import com.restkeeper.store.mapper.TableAreaMapper;
+import org.apache.dubbo.config.annotation.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@org.springframework.stereotype.Service("tableAreaService")
+@Service(version = "1.0.0",protocol = "dubbo")
+public class TableAreaServiceImpl extends ServiceImpl<TableAreaMapper, TableArea> implements ITableAreaService {
+    @Override
+    @Transactional
+    public boolean add(TableArea tableArea) {
+        checkNameExist(tableArea.getAreaName());
+        return this.save(tableArea);
+    }
+
+
+    private void checkNameExist(String tableAreaName) {
+        QueryWrapper<TableArea> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().select(TableArea::getAreaId).eq(TableArea::getAreaName,tableAreaName);
+        Integer count = this.baseMapper.selectCount(queryWrapper);
+        if (count > 0) throw new BussinessException("该区域已存在");
+    }
+}
