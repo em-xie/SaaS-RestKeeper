@@ -22,6 +22,9 @@ public class PageVO<T> {
 
     private List<T> items; //数据记录
 
+    public PageVO() {
+    }
+
     public PageVO(IPage page) {
         this.pagesize = page.getSize();
         this.counts = page.getTotal();

@@ -42,4 +42,13 @@ public class TableServiceImpl extends ServiceImpl<TableMapper, Table> implements
         Integer count = this.baseMapper.selectCount(queryWrapper);
         if (count > 0) throw new BussinessException("该桌台已存在");
     }
+
+
+    @Override
+    public Integer countTableByStatus(String areaId, Integer status) {
+
+        QueryWrapper<Table> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(Table::getAreaId,areaId).eq(Table::getStatus,status);
+        return this.count(queryWrapper);
+    }
 }

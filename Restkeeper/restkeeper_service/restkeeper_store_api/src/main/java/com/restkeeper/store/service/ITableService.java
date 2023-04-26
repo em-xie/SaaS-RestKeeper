@@ -9,4 +9,6 @@ public interface ITableService extends IService<Table> {
 
 
     IPage<Table> queryPageByAreaId(String areaId, int pageNum, int pageSize);
+
+    Integer countTableByStatus(String areaId,Integer status);
 }

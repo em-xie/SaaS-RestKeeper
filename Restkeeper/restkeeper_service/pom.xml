@@ -20,6 +20,10 @@
         <module>restkeeper_shop</module>
         <module>restkeeper_store_api</module>
         <module>restkeeper_store</module>
+        <module>restkeeper_es</module>
+        <module>restkeeper_es_api</module>
+        <module>restkeeper_order</module>
+        <module>restkeeper_order_api</module>
     </modules>
 
 
