@@ -38,4 +38,13 @@ public class SellCalculationServiceImpl extends ServiceImpl<SellCalculationMappe
             this.updateById(sellCalculation);
         }
     }
+
+    @Override
+    public void add(String dishId, int i) {
+        QueryWrapper<SellCalculation> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(SellCalculation::getDishId,dishId);
+        SellCalculation sellCalculation = this.getOne(queryWrapper);
+        sellCalculation.setRemainder(sellCalculation.getRemainder()+i);
+        this.updateById(sellCalculation);
+    }
 }

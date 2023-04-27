@@ -12,4 +12,6 @@ public interface ISellCalculationService extends IService<SellCalculation> {
     Integer getRemainderCount(String dishId);
 
     void decrease(String dishId, Integer dishNumber);
+
+    void add(String dishId, int i);
 }
