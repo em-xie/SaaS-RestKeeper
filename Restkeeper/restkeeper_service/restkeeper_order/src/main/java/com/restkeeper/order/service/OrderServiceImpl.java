@@ -1,15 +1,16 @@
 package com.restkeeper.order.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.collect.Lists;
 import com.restkeeper.aop.TenantAnnotation;
 import com.restkeeper.constants.OrderDetailType;
 import com.restkeeper.constants.OrderPayType;
 import com.restkeeper.constants.SystemCode;
-import com.restkeeper.dto.CreditDTO;
-import com.restkeeper.dto.DetailDTO;
-import com.restkeeper.entity.OrderEntity;
-import com.restkeeper.entity.ReverseOrder;
+import com.restkeeper.dto.*;
+import com.restkeeper.entity.*;
 import com.restkeeper.order.mapper.OrderMapper;
+import com.restkeeper.service.IOrderDetailMealService;
 import com.restkeeper.service.IOrderService;
 import com.restkeeper.store.entity.*;
 import com.restkeeper.store.service.*;
@@ -17,7 +18,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.dubbo.config.annotation.Service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.restkeeper.entity.OrderDetailEntity;
 import com.restkeeper.entity.OrderEntity;
 import com.restkeeper.exception.BussinessException;
 import com.restkeeper.order.mapper.OrderMapper;
@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -301,5 +302,214 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         return this.updateById(orderEntity);
     }
 
+    @Override
+    public CurrentAmountCollectDTO getCurrentCollect(LocalDate start, LocalDate end) {
+        CurrentAmountCollectDTO result = new CurrentAmountCollectDTO();
+        //查询并设置已付款总金额
+        QueryWrapper<OrderEntity> totalPayQueryWrapper = new QueryWrapper<>();
+        totalPayQueryWrapper.select("SUM(pay_amount) as total_amount")
+                .lambda().ge(OrderEntity::getLastUpdateTime, start)
+                .lt(OrderEntity::getLastUpdateTime, end)
+                .eq(OrderEntity::getPayStatus, SystemCode.ORDER_STATUS_PAYED);
+        OrderEntity totalPayAmount = this.getOne(totalPayQueryWrapper);
+        result.setPayTotal(totalPayAmount != null ? totalPayAmount.getTotalAmount() : 0);
+        //查询并设置已付款总单数
+        QueryWrapper<OrderEntity> totalPayCountWrapper = new QueryWrapper<>();
+        totalPayCountWrapper.lambda()
+                .ge(OrderEntity::getLastUpdateTime, start)
+                .lt(OrderEntity::getLastUpdateTime, end)
+                .eq(OrderEntity::getPayStatus, SystemCode.ORDER_STATUS_PAYED);
+        int totalPayCount = this.count(totalPayCountWrapper);
+        result.setPayTotalCount(totalPayCount);
+        //查询并设置未付款总金额
+        QueryWrapper<OrderEntity> noPayTotalQueryWrapper = new QueryWrapper<>();
+        noPayTotalQueryWrapper.select("sum(total_amount) as total_amount")
+                .lambda().ge(OrderEntity::getLastUpdateTime, start)
+                .lt(OrderEntity::getLastUpdateTime, end)
+                .eq(OrderEntity::getPayStatus, SystemCode.ORDER_STATUS_NOTPAY);
+        OrderEntity noPayTotalAmount = this.getOne(noPayTotalQueryWrapper);
+        result.setNoPayTotal(noPayTotalAmount != null ? noPayTotalAmount.getTotalAmount() : 0);
+        //查询并设置未付款总单数
+        QueryWrapper<OrderEntity> noPayTotalCountWrapper = new QueryWrapper<>();
+        noPayTotalCountWrapper.lambda().ge(OrderEntity::getLastUpdateTime, start)
+                .lt(OrderEntity::getLastUpdateTime, end)
+                .eq(OrderEntity::getPayStatus, SystemCode.ORDER_STATUS_NOTPAY);
+        int noPayTotalCount = this.count(noPayTotalCountWrapper);
+        result.setNoPayTotalCount(noPayTotalCount);
+        //查询并设置已结账就餐人数
+        QueryWrapper<OrderEntity> payedTotalPersonQueryWrapper = new QueryWrapper<>();
+        payedTotalPersonQueryWrapper.select("sum(person_numbers) as person_numbers")
+                .lambda()
+                .ge(OrderEntity::getLastUpdateTime, start)
+                .lt(OrderEntity::getLastUpdateTime, end)
+                .eq(OrderEntity::getPayStatus, SystemCode.ORDER_STATUS_PAYED);
+        OrderEntity payedTotalPerson = this.getOne(payedTotalPersonQueryWrapper);
+        result.setTotalPerson(payedTotalPerson != null ? payedTotalPerson.getPersonNumbers() : 0);
+
+        //查询并设置未结账就餐人数
+        QueryWrapper<OrderEntity> notPayTotalPersonQueryWrapper = new QueryWrapper<>();
+        notPayTotalPersonQueryWrapper.select("sum(person_numbers) as person_numbers")
+                .lambda().ge(OrderEntity::getLastUpdateTime, start)
+                .lt(OrderEntity::getLastUpdateTime, end)
+                .eq(OrderEntity::getPayStatus, SystemCode.ORDER_STATUS_NOTPAY);
+        OrderEntity notPayTotalPerson = this.getOne(notPayTotalPersonQueryWrapper);
+        result.setCurrentPerson(notPayTotalPerson != null ? notPayTotalPerson.getPersonNumbers() : 0);
+        return result;
+    }
+
+    @Override
+    public List<CurrentHourCollectDTO> getCurrentHourCollect(LocalDate start, LocalDate end, Integer type) {
+        QueryWrapper<OrderEntity> wrapper = new QueryWrapper<>();
+        if (type == 1) {
+            //针对销售额求和
+            wrapper.select("sum(total_amount) " +
+                    "as total_amount", "hour(last_update_time) as current_date_hour")
+                    .lambda().ge(OrderEntity::getLastUpdateTime,start)
+                    .lt(OrderEntity::getLastUpdateTime,end);
+        }
+        if (type == 2){
+            //针对销售量（单数）求和
+            wrapper.select("count(total_amount) as total_amount",
+                            "hour(last_update_time) as current_date_hour")
+                    .lambda().ge(OrderEntity::getLastUpdateTime,start)
+                    .lt(OrderEntity::getLastUpdateTime,end);
+        }
+
+        //针对时间分组汇总
+        wrapper.groupBy("current_date_hour").orderByAsc("current_date_hour");
+        List<CurrentHourCollectDTO> result = Lists.newArrayList();
+        this.getBaseMapper().selectList(wrapper).forEach(o->{
+            CurrentHourCollectDTO item = new CurrentHourCollectDTO();
+            item.setTotalAmount(o.getTotalAmount());
+            item.setCurrentDateHour(o.getCurrentDateHour());
+            result.add(item);
+        });
+
+        //当时间为null，设定值为0。
+        for(int i=0;i<=23;i++){
+            int hour = i;
+            if (!result.stream().anyMatch(r->r.getCurrentDateHour() == hour)){
+                CurrentHourCollectDTO item = new CurrentHourCollectDTO();
+                item.setTotalAmount(0);
+                item.setCurrentDateHour(hour);
+                result.add(item);
+            }
+        }
+        //对结果根据小时从小到大排序
+        result.sort((a,b)->Integer.compare(a.getCurrentDateHour(),b.getCurrentDateHour()));
+
+        return result;
+    }
+
+    @Override
+    public List<PayTypeCollectDTO> getPayTypeCollect(LocalDate start, LocalDate end) {
+
+        List<PayTypeCollectDTO> result = Lists.newArrayList();
+
+        QueryWrapper<OrderEntity> wrapper = new QueryWrapper<>();
+
+        wrapper.select("pay_type","SUM(pay_amount) as total_amount")
+                .lambda().ge(OrderEntity::getLastUpdateTime,start)
+                .lt(OrderEntity::getLastUpdateTime,end)
+                .eq(OrderEntity::getPayStatus,SystemCode.ORDER_STATUS_PAYED)
+                .groupBy(OrderEntity::getPayType);
+
+        List<OrderEntity> orderEntityList = this.getBaseMapper().selectList(wrapper);
+
+        orderEntityList.forEach(orderEntity -> {
+
+            PayTypeCollectDTO dto = new PayTypeCollectDTO();
+
+            dto.setPayType(orderEntity.getPayType());
+            dto.setPayName(PayType.getName(orderEntity.getPayType()));
+            dto.setTotalCount(orderEntity.getTotalAmount());
+            result.add(dto);
+        });
+
+        return result;
+    }
+
+    @Override
+    public PrivilegeDTO getPrivilegeCollect(LocalDate start, LocalDate end) {
+
+        PrivilegeDTO dto = new PrivilegeDTO();
+
+        QueryWrapper<OrderEntity> wrapper = new QueryWrapper<>();
+
+        wrapper.select("SUM(present_amount) as present_amount","SUM(free_amount) as free_amount","SUM(small_amount) AS small_amount")
+                .lambda().ge(OrderEntity::getLastUpdateTime,start)
+                .lt(OrderEntity::getLastUpdateTime,end)
+                .eq(OrderEntity::getPayStatus,SystemCode.ORDER_STATUS_PAYED);
+
+        OrderEntity orderEntity = this.getBaseMapper().selectOne(wrapper);
+
+        dto.setPresentAmount(orderEntity.getPresentAmount());
+        dto.setSmallAmount(orderEntity.getSmallAmount());
+        dto.setFreeAmount(orderEntity.getFreeAmount());
+
+        return dto;
+    }
+
+
+    @Reference(version = "1.0.0",check = false)
+    private ISetMealDishService setMealDishService;
+
+    @Autowired
+    @Qualifier("orderDetailMealService")
+    private IOrderDetailMealService orderDetailMealService;
+
+    //向t_order_detail_meal中添加数据
+    @TenantAnnotation
+    private void saveOrderDetailMealInfo(String orderId){
+
+        //获取订单明细表中的套餐信息
+        QueryWrapper<OrderDetailEntity> wrapper = new QueryWrapper<>();
+        wrapper.lambda().eq(OrderDetailEntity::getOrderId,orderId).eq(OrderDetailEntity::getDishType,2);
+        List<OrderDetailEntity> orderDetailSetMealList = orderDetailService.list(wrapper);
+
+        //获取套餐下的相关菜品信息  orderSetMeal->套餐
+        orderDetailSetMealList.forEach(orderSetMeal->{
+
+            //通过套餐id获取该套餐下的菜品信息
+            List<Dish> dishList = setMealDishService.getAllDishBySetMealId(orderSetMeal.getDishId());
+
+            //插入到orderdetailmeal中（套餐下的每一个菜品信息）
+            OrderDetailMealEntity orderDetailMealEntity = new OrderDetailMealEntity();
+
+            //复制共有信息
+            BeanUtils.copyProperties(orderSetMeal,orderDetailMealEntity);
+
+
+            //当前套餐的优惠比率 = 套餐支付金额 / 套餐中所有菜品的原价总和
+            float allDishPriceInSetMeal = dishList.stream().map(d->d.getPrice()*setMealDishService.getDishCopiesInSetMeal(d.getId(),orderSetMeal.getDishId()))
+                    .reduce(Integer::sum).get() * orderSetMeal.getDishNumber();
+            float rate = orderSetMeal.getDishAmount() / allDishPriceInSetMeal;
+
+
+            //循环补充其他信息
+            dishList.forEach(d->{
+                //去除相关重复的信息
+                orderDetailMealEntity.setDetailId(null);
+                orderDetailMealEntity.setShopId(null);
+                orderDetailMealEntity.setStoreId(null);
+
+                orderDetailMealEntity.setDishId(d.getId());
+                orderDetailMealEntity.setDishName(d.getName());
+                orderDetailMealEntity.setDishPrice(d.getPrice());
+                orderDetailMealEntity.setDishType(1);
+                orderDetailMealEntity.setDishCategoryName(d.getDishCategory().getName());
+                //获取套餐中这个菜品的数量
+                Integer dishCopies = setMealDishService.getDishCopiesInSetMeal(d.getId(),orderSetMeal.getDishId());
+
+                //菜品数量：订单中套餐的数量 * 套餐中这个菜品的数量
+                orderDetailMealEntity.setDishNumber(orderSetMeal.getDishNumber() * dishCopies);
+
+                orderDetailMealEntity.setDishAmount((int)(d.getPrice()*dishCopies*orderSetMeal.getDishNumber()*rate));
+
+                orderDetailMealService.save(orderDetailMealEntity);
+            });
+
+        });
+    }
 
 }
