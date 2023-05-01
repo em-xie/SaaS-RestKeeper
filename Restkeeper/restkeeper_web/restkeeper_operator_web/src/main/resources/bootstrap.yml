@@ -14,8 +14,19 @@ spring:
         shared-dataids: common.yml
         #哪些共享配置支持动态刷新，如多个使用逗号分隔
         refreshable-dataids: common.yml
+  #邮箱配置
+  mail:
+    host: smtp.qq.com #发送邮件服务器
+    username: 1111111111@qq.com #发送邮件的邮箱地址
+    password: cshgwubjci #客户端授权码，不是邮箱密码，这个在qq邮箱设置里面自动生成的
+    from: 44076@qq.com # 发送邮件的地址，和上面username一致
+    default-encoding: utf-8
+    port: 465 # SMTP 服务器的端口
+
+
   profiles:
     active: dev
+
 server:
   port: 8083
 
