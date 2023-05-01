@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: operator-web
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.200.128:8848
+      config:
+        server-addr: 192.168.200.128:8848
+        file-extension: yml #指定文件扩展名，默认为properties
+        prefix: operator-web
+        #添加共享配置的dataId,如多个使用逗号分隔，并且越靠后，优先级越高
+        #文件后缀名不能少，只支持yaml，yml，properies
+        shared-dataids: common.yml
+        #哪些共享配置支持动态刷新，如多个使用逗号分隔
+        refreshable-dataids: common.yml
+    sentinel:
+      datasource:
+        flow:
+          nacos:
+            server-addr: 192.168.200.128:8848
+            dataId: operator-dubbo-provider-flow-rule
+            groupId: SENTINEL_GROUP
+            rule-type: flow
+        degrade:
+          nacos:
+            server-addr: 192.168.200.128:8848
+            dataId: operator-dubbo-provider-degrade-rule
+            groupId: SENTINEL_GROUP
+            rule-type: degrade
+        system:
+          nacos:
+            server-addr: 192.168.200.128:8848
+            dataId: operator-dubbo-provider-system-rule
+            groupId: SENTINEL_GROUP
+            rule-type: system
+        authority:
+          nacos:
+            server-addr: 192.168.200.128:8848
+            dataId: operator-dubbo-provider-authority-rule
+            groupId: SENTINEL_GROUP
+            rule-type: authority
+        param-flow:
+          nacos:
+            server-addr: 192.168.200.128:8848
+            dataId: operator-dubbo-provider-param-flow-rule
+            groupId: SENTINEL_GROUP
+            rule-type: param-flow
+  profiles:
+    active: dev
+server:
+  port: 8083
+ahas.namespace: default
+project.name: operator-web
+ahas.license: 9e2******524af196*********
+
+
