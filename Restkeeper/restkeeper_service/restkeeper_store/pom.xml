@@ -67,6 +67,19 @@
             <version>1.1.21</version>
         </dependency>
         <!--seata依赖结束-->
+
+
+        <dependency>
+            <groupId>com.restkeeper</groupId>
+            <artifactId>restkeeper_order_api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.restkeeper</groupId>
+            <artifactId>restkeeper_printer_api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
 </project>

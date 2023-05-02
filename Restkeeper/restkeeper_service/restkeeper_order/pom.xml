@@ -57,6 +57,10 @@
             <version>1.1.21</version>
         </dependency>
         <!--seata依赖结束-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

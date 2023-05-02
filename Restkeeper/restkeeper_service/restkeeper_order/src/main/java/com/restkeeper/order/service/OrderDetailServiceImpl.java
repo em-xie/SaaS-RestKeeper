@@ -57,4 +57,12 @@ public class OrderDetailServiceImpl extends ServiceImpl<OrderDetailMapper, Order
 
         return orderDetailAllMapper.selectList(wrapper);
     }
+
+
+    @Override
+    public List<OrderDetailEntity> getOrderDetailListByOrderId(String orderId) {
+        QueryWrapper<OrderDetailEntity> wrapper = new QueryWrapper<>();
+        wrapper.lambda().eq(OrderDetailEntity::getOrderId,orderId);
+        return this.list(wrapper);
+    }
 }

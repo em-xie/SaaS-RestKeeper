@@ -25,6 +25,8 @@
         <module>restkeeper_order</module>
         <module>restkeeper_order_api</module>
         <module>restkeeper_service_job</module>
+        <module>restkeeper_printer_api</module>
+        <module>restkeeper_service_printer</module>
     </modules>
 
 

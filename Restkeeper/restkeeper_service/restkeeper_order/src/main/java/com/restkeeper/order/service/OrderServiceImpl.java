@@ -1,5 +1,6 @@
 package com.restkeeper.order.service;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.common.collect.Lists;
@@ -10,6 +11,7 @@ import com.restkeeper.constants.SystemCode;
 import com.restkeeper.dto.*;
 import com.restkeeper.entity.*;
 import com.restkeeper.order.mapper.OrderMapper;
+import com.restkeeper.print.PrintMessage;
 import com.restkeeper.service.IOrderDetailMealService;
 import com.restkeeper.service.IOrderService;
 import com.restkeeper.store.entity.*;
@@ -30,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
 import org.apache.dubbo.rpc.RpcContext;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -55,6 +58,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
     @Reference(version = "1.0.0",check = false)
     private ISellCalculationService sellCalculationService;
 
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
     @Override
 //    @Transactional
     @GlobalTransactional
@@ -89,6 +95,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
             //沽清扣减
             sellCalculationService.decrease(orderDetailEntity.getDishId(),orderDetailEntity.getDishNumber());
 
+            //后厨打印
+            PrintMessage printMessage = new PrintMessage();
+            printMessage.setFront(false);
+            printMessage.setPrintType(SystemCode.PRINT_MADE_MENU);
+            printMessage.setDishId(orderDetailEntity.getDishId());
+            printMessage.setDishNumber(orderDetailEntity.getDishNumber());
+            printMessage.setStoreId(TenantContext.getStoreId());
+            printMessage.setShopId(TenantContext.getShopId());
+            rabbitTemplate.convertAndSend(SystemCode.PRINTER_QUEUE_NAME, JSON.toJSONString(printMessage));
         });
         orderDetailService.saveBatch(orderDetailEntities);
 
@@ -157,7 +172,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         Table table = tableService.getById(orderEntity.getTableId());
         table.setStatus(SystemCode.TABLE_STATUS_FREE);
         tableService.updateById(table);
+        saveOrderDetailMealInfo(orderEntity.getOrderId());
 
+        PrintMessage printMessage = new PrintMessage();
+        printMessage.setFront(true);
+        printMessage.setOrderId(orderEntity.getOrderId());
+        printMessage.setPrintType(SystemCode.PRINT_BILL);
+        printMessage.setStoreId(TenantContext.getStoreId());
+        printMessage.setShopId(TenantContext.getShopId());
+        rabbitTemplate.convertAndSend(SystemCode.PRINTER_QUEUE_NAME,JSON.toJSONString(printMessage));
         return true;
     }
 

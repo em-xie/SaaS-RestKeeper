@@ -42,4 +42,20 @@ public class SystemCode {
     // 订单来源 0 门店 1 app
     public final static int ORDER_SOURCE_STORE = 0;
     public final static int ORDER_SOURCE_APP = 1;
+
+
+    // 打印类型 0:后厨制作菜单 1:后厨转菜单 2:后厨转台单 3:后厨退菜单 4:前台预结单 5:结账单 6:客单
+    public final static int PRINT_MADE_MENU = 0;
+    public final static int PRINT_CHANGE_MENU = 1;
+    public final static int PRINT_CHANGE_TABLE = 2;
+    public final static int PRINT_RETURN_DISH = 3;
+    public final static int PRINT_BEFOREHAND = 4;
+    public final static int PRINT_BILL = 5;
+    public final static int PRINT_CUSTOMER = 6;
+
+    public static final String PRINTER_QUEUE_NAME = "print_app_queue";
+
+    public static final String PRINTER_EXCHANGE_NAME = "print_app_exchange";
+
+    public static final String PRINTER_KEY="print_key";
 }

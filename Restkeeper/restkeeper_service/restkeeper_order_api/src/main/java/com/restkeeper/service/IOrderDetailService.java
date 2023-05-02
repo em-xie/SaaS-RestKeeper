@@ -28,4 +28,6 @@ public interface IOrderDetailService extends IService<OrderDetailEntity> {
      * @return
      */
     List<OrderDetailAllView> getCurrentDishRank(LocalDate start,LocalDate end);
+
+    List<OrderDetailEntity> getOrderDetailListByOrderId(String orderId);
 }
