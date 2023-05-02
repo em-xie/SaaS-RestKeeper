@@ -19,4 +19,6 @@ public interface ISetMealService extends IService<SetMeal> {
 
     //修改套餐
     boolean update(SetMeal setMeal, List<SetMealDish> setMealDishes);
+
+    IPage<SetMeal> getByCategoryId(String categoryId, long page, long pageSize);
 }

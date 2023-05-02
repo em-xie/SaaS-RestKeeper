@@ -1,5 +1,7 @@
 package com.restkeeper.store.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.restkeeper.constants.SystemCode;
 import com.restkeeper.store.entity.Dish;
@@ -64,5 +66,13 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements ID
     @Override
     public List<Map<String, Object>> findEnableDishListInfo(String categoryId, String name) {
         return null;
+    }
+
+    @Override
+    public IPage<Dish> queryByCategoryId(String categoryId, long pageNo, long pageSize) {
+        IPage<Dish> page = new Page<>(pageNo,pageSize);
+        QueryWrapper<Dish> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(Dish::getCategoryId,categoryId);
+        return this.page(page,queryWrapper);
     }
 }

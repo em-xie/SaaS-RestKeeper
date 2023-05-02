@@ -2,9 +2,12 @@ package com.restkeeper.store.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.restkeeper.exception.BussinessException;
+import com.restkeeper.lock.CalculationBusinessLock;
 import com.restkeeper.store.entity.SellCalculation;
 import com.restkeeper.store.mapper.SellCalculationMapper;
 import org.apache.dubbo.config.annotation.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @org.springframework.stereotype.Service("sellCalculationService")
@@ -46,5 +49,60 @@ public class SellCalculationServiceImpl extends ServiceImpl<SellCalculationMappe
         SellCalculation sellCalculation = this.getOne(queryWrapper);
         sellCalculation.setRemainder(sellCalculation.getRemainder()+i);
         this.updateById(sellCalculation);
+    }
+
+    @Autowired
+    private CalculationBusinessLock lock;
+
+    @Override
+    @Transactional
+    public void plusDish(String dishId) {
+        //判断沽清
+        Integer remainderCount = this.getRemainderCount(dishId);
+        if (remainderCount <0){
+            return;
+        }
+
+        //操作沽清扣减，考虑锁控制
+        String key = dishId;
+        boolean flag = lock.spinLock(key,()->getRemainderCount(dishId));
+        if (!flag){
+            throw new BussinessException("商品已被沽清");
+        }else {
+            //获取到锁
+            try {
+                QueryWrapper<SellCalculation> queryWrapper = new QueryWrapper<>();
+                queryWrapper.lambda().eq(SellCalculation::getDishId,dishId);
+                SellCalculation sellCalculation = this.getOne(queryWrapper);
+                sellCalculation.setRemainder(sellCalculation.getRemainder()-1);
+                this.updateById(sellCalculation);
+            } finally {
+                //释放锁
+                lock.unLock(key);
+            }
+        }
+
+    }
+
+    @Override
+    @Transactional
+    public void reduceDish(String dishId) {
+
+        //判断沽清
+        Integer remainderCount = this.getRemainderCount(dishId);
+        if (remainderCount <0){
+            return;
+        }
+
+        QueryWrapper<SellCalculation> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(SellCalculation::getDishId,dishId);
+        SellCalculation sellCalculation = this.getOne(queryWrapper);
+        remainderCount = sellCalculation.getRemainder()+1;
+        if (remainderCount > sellCalculation.getSellLimitTotal()){
+            remainderCount = sellCalculation.getSellLimitTotal();
+        }
+        sellCalculation.setRemainder(remainderCount);
+        this.updateById(sellCalculation);
+
     }
 }

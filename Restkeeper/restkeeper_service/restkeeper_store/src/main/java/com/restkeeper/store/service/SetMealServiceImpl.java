@@ -77,4 +77,12 @@ public class SetMealServiceImpl extends ServiceImpl<SetMealMapper, SetMeal> impl
             return false;
         }
     }
+
+    @Override
+    public IPage<SetMeal> getByCategoryId(String categoryId, long pageNo, long pageSize) {
+        IPage<SetMeal> page = new Page<>(pageNo,pageSize);
+        QueryWrapper<SetMeal> queryWrapper = new QueryWrapper<>();
+        queryWrapper.lambda().eq(SetMeal::getCategoryId,categoryId);
+        return this.page(page,queryWrapper);
+    }
 }

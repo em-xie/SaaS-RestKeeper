@@ -1,5 +1,6 @@
 package com.restkeeper.response.interceptor;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -8,9 +9,16 @@ import org.springframework.web.servlet.config.annotation.*;
 @Configuration
 public class InterceptorConfig implements WebMvcConfigurer {
 
+    @Value("${app.type:''}")
+    private String appType;
+
     @Bean
     public HandlerInterceptor MyInterceptor() {
-        return new WebHandlerInterceptor();
+        if ("microApp".equals(appType)){
+            return new MicroHandlerInterceptor();
+        }else {
+            return new WebHandlerInterceptor();
+        }
     }
 
     @Override

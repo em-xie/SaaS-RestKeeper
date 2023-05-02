@@ -1,0 +1,20 @@
+<html>
+<head>
+    <title>RabbitMQ Web STOMP Examples : Echo Server</title>
+    <meta charset="UTF-8">
+    <script src="stomp.min.js"></script>
+</head>
+<script>
+    var client = Stomp.client('ws://192.168.200.128:15674/ws');
+    var on_connect = function(x) {
+        id = client.subscribe("/exchange/paynotify", function(d) {
+            alert(d.body);
+        });
+    };
+    var on_error =  function() {
+        console.log('error');
+    };
+    client.connect('guest', 'guest', on_connect, on_error, '/');
+</script>
+</body>
+</html>

@@ -16,6 +16,7 @@
         <module>restkeeper_operator_web</module>
         <module>restkeeper_enterprise_web</module>
         <module>restkeeper_cash_web</module>
+        <module>restkeeper_microapp</module>
     </modules>
 
     <dependencies>

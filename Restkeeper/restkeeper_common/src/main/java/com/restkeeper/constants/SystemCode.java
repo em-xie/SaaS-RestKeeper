@@ -58,4 +58,10 @@ public class SystemCode {
     public static final String PRINTER_EXCHANGE_NAME = "print_app_exchange";
 
     public static final String PRINTER_KEY="print_key";
+
+    //小程序前缀字符串
+    public final static String MIRCO_APP_SHOP_CART_PREFIX = "micro.app.shopCart.";
+
+    // 小程序端通信交换机名称
+    public final static String MICROSOFT_EXCHANGE_NAME = "micro_app_exchange";
 }
