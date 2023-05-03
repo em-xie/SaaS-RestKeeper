@@ -64,4 +64,10 @@ public class SystemCode {
 
     // 小程序端通信交换机名称
     public final static String MICROSOFT_EXCHANGE_NAME = "micro_app_exchange";
+
+    //小程序支付时锁前缀字符串
+    public final static String MICRO_APP_LOCK_PREFIX = "micro.app.order.";
+
+
+    public final static int ORDER_STATUS_PAYING = 2;
 }

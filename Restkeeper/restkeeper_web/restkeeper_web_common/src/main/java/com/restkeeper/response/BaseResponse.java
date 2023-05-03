@@ -56,4 +56,13 @@ public class BaseResponse<D> implements Serializable {
         this(false,msg);
         this.code = code;
     }
+
+    public BaseResponse(D data,boolean success){
+        this(data);
+        this.success = success;
+        if(success == false){
+            this.message = "操作失败";
+            this.code = 300;
+        }
+    }
 }

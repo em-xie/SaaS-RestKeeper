@@ -6,14 +6,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * @作者：xie
- * @时间：2023/5/2 14:57
- */
 @Component
 public class CalculationBusinessLock {
+
     @Autowired
     private RedisTemplate<String,Object> redisTemplate;
+
     private final String LOCKVALUE="lockvalue";
 
     //锁标记
@@ -54,6 +52,11 @@ public class CalculationBusinessLock {
     //释放锁
     public void unLock(String lockKey){
         redisTemplate.delete(lockKey);
+    }
+
+    public boolean lock(String lockKey, Integer lockTime) {
+
+        return getLock(lockKey, lockTime);
     }
 
     @FunctionalInterface

@@ -5,6 +5,7 @@ package com.restkeeper.response;
  * @时间：2023/4/22 15:38
  */
 
+import com.alibaba.fastjson.JSON;
 import com.restkeeper.response.exception.ExceptionResponse;
 import com.restkeeper.response.vo.PageVO;
 import com.restkeeper.utils.Result;
@@ -61,6 +62,19 @@ public class ResponseAdvisor implements ResponseBodyAdvice<Object> {
 
         if (body instanceof ExceptionResponse){
             return new BaseResponse<>(400,((ExceptionResponse)body).getMsg());
+        }
+
+        //字符串要特殊处理
+        if(body instanceof String){
+            BaseResponse<Object> result = new BaseResponse<>(body);
+            try {
+                String response1 = JSON.toJSONString(result);
+                request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                response.getBody().write(response1.getBytes());
+                return null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         return new BaseResponse<>(body);

@@ -473,6 +473,30 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, OrderEntity> impl
         return dto;
     }
 
+    @Override
+    @Transactional
+    public String addMicroOrder(OrderEntity orderEntity) {
+        //生成订单流水号
+        if (StringUtils.isEmpty(orderEntity.getOrderNumber())){
+            String storeId = RpcContext.getContext().getAttachment("storeId");
+            orderEntity.setOrderNumber(SequenceUtils.getSequence(storeId));
+        }
+        this.saveOrUpdate(orderEntity);
+
+        //操作订单详情
+        List<OrderDetailEntity> orderDetailEntities = orderEntity.getOrderDetails();
+        orderDetailEntities.forEach(orderDetailEntity -> {
+
+            orderDetailEntity.setOrderId(orderEntity.getOrderId());
+            orderDetailEntity.setOrderNumber(SequenceUtils.getSequenceWithPrefix(orderEntity.getOrderNumber()));
+
+        });
+        orderDetailService.saveBatch(orderDetailEntities);
+
+
+        return orderEntity.getOrderId();
+    }
+
 
     @Reference(version = "1.0.0",check = false)
     private ISetMealDishService setMealDishService;

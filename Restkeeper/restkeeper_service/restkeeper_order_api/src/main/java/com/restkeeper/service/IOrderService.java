@@ -60,4 +60,6 @@ public interface IOrderService extends IService<OrderEntity> {
      * @return
      */
     PrivilegeDTO getPrivilegeCollect(LocalDate start,LocalDate end);
+
+    String addMicroOrder(OrderEntity orderEntity);
 }
